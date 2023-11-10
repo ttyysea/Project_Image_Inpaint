@@ -1,0 +1,397 @@
+import React, { useEffect, useRef, useState } from "react";
+import "./DrawRectangle.css";
+import { HiArrowUturnRight, HiArrowUturnLeft } from "react-icons/hi2";
+import { AiOutlineDownload,AiOutlineZoomIn,AiOutlineZoomOut } from "react-icons/ai";
+import { CiImageOn } from "react-icons/ci";
+import Loading from "../Loading/Loading";
+
+import { toast } from 'react-toastify';
+
+const DrawRectangle = () => {
+  const [brushSize, setBrushSize] = useState(50);
+  const [brushColor, setBrushColor] = useState("rgba(255, 199, 122)");
+  const canvasRef = useRef(null);
+  const contextRef = useRef(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [file, setFile] = useState();
+  const [history, setHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [imageApi, setImageApi] = useState(null);
+  const [originalImage, setOriginalImage] = useState(null);
+  const fileInputRef = useRef(null);
+  const [isLoading, setLoading] = useState(false);
+  const [canDownload, setCanDownload] = useState(false);
+  const SCROLL_SENSITIVITY = 0.0005;
+  const MAX_ZOOM = 10;
+  const MIN_ZOOM = 0.3;
+  const [zoom, setZoom] = useState(0.4);
+  const [draggind, setDragging] = useState(false);
+  const containerRef = useRef(null);
+  const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+  
+
+  useEffect(() => {
+    setupCanvas();
+  }, []);
+
+  useEffect(() => {
+    drawImageOnCanvas();
+  }, [file]);
+
+  const setupCanvas = () => {
+    const canvas = canvasRef.current;
+    canvas.width = 500;
+    canvas.height = 500;
+    const context = canvas.getContext("2d");
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.lineWidth = 50;
+    context.strokeStyle = brushColor;
+    contextRef.current = context;
+  };
+
+  const startDrawing = ({ nativeEvent }) => {
+    if (historyIndex !== history.length - 1) {
+      setHistory(history.slice(0, historyIndex + 1));
+    }
+
+    const { offsetX, offsetY } = nativeEvent;
+    contextRef.current.beginPath();
+    contextRef.current.moveTo(offsetX, offsetY);
+    contextRef.current.lineTo(offsetX, offsetY);
+    contextRef.current.stroke();
+    setIsDrawing(true);
+    nativeEvent.preventDefault();
+  };
+
+  const draw = ({ nativeEvent }) => {
+    if (!isDrawing ) {
+      return;
+    }
+
+    const { offsetX, offsetY } = nativeEvent;
+    contextRef.current.lineTo(offsetX, offsetY);
+    contextRef.current.stroke();
+    nativeEvent.preventDefault();
+  };
+
+  const stopDrawing = () => {
+    if (isDrawing) {
+      setHistory([...history, canvasRef.current.toDataURL()]);
+      setHistoryIndex(history.length);
+    }
+    setIsDrawing(false);
+  };
+
+  const handleBrushSizeChange = (event) => {
+    const newSize = parseInt(event.target.value);
+    setBrushSize(newSize);
+  
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    context.lineWidth = newSize;
+  };
+
+  const saveImageToLocal = () => {
+    const image = canvasRef.current.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.href = image;
+    link.download = `CustomImage.png`;
+    link.click();
+    toast.info("Download Image File Success.",{
+      position: "top-right",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "colored",
+    })
+  };
+
+  const handleFile = (event) => {
+    setFile(event.target.files[0]);
+  };
+
+  const setImageAndDraw = (img) => {
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+
+    canvas.width = img.naturalWidth
+    canvas.height = img.naturalHeight
+    context.drawImage(img, 0, 0 , canvas.width, canvas.height);
+
+    setHistory([canvas.toDataURL()]); 
+    setHistoryIndex(0); 
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.lineWidth = 50;
+    context.strokeStyle = brushColor;
+    setFile(null);
+  };
+
+
+  const drawImageOnCanvas = () => {
+
+    if (file) {
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        const img = new Image();
+        setOriginalImage(img);
+
+        img.onload = () => {
+          setImageAndDraw(img);
+        };
+
+        img.src = e.target.result;
+      };
+
+      reader.readAsDataURL(file);
+    }
+  };
+ 
+  const undo = () => handleHistoryChange(historyIndex - 1);
+  const redo = () => handleHistoryChange(historyIndex + 1);
+
+  const handleHistoryChange = (newIndex) => {
+    if (newIndex >= 0 && newIndex < history.length) {
+      setHistoryIndex(newIndex);
+      const img = new Image();
+      img.src = history[newIndex];
+      img.onload = () => {
+        const canvas = canvasRef.current;
+        const context = canvas.getContext("2d");
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(img, 0, 0);
+      };
+    }
+  };
+
+  const sendPicWish = async () => {
+    try {
+      console.log("Processing...");
+      setLoading(true);
+
+
+      if (!originalImage && !imageApi) {
+        setLoading(false);
+        console("Please upload an image before processing.")
+        alert("Please upload an image before processing.");
+        return;
+      }
+
+      const sourceImage = imageApi || originalImage;
+
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+
+      canvas.width = sourceImage.width;
+      canvas.height = sourceImage.height;
+
+      context.drawImage(sourceImage, 0, 0);
+
+      const blob = await new Promise((resolve) => {
+        canvas.toBlob(resolve, "image/jpeg");
+      });
+
+      const imageFile = new File([blob], "image.jpg");
+      const fileURI = canvas.toDataURL("image/jpeg")
+      console.log("file", imageFile);
+      console.log("file uri", fileURI);
+
+      const changCanvas = canvasRef.current;
+      const changContext = changCanvas.getContext("2d");
+      const imageData = changContext.getImageData(0, 0, changCanvas.width, changCanvas.height);
+      const data = imageData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const red = data[i];
+        const green = data[i + 1];
+        const blue = data[i + 2];
+
+        if (red === 255 && green === 199 && blue === 122) {
+          data[i] = 255;
+          data[i + 1] = 255;
+          data[i + 2] = 255;
+          data[i + 3] = 255;
+        } else {
+          data[i] = 0;
+          data[i + 1] = 0;
+          data[i + 2] = 0;
+          data[i + 3] = 255;
+        }
+      }
+
+      const maskCanvas = document.createElement("canvas");
+      const maskContext = maskCanvas.getContext("2d");
+      maskCanvas.width = changCanvas.width;
+      maskCanvas.height = changCanvas.height;
+      maskContext.putImageData(imageData, 0, 0);
+
+      const maskBlob = await new Promise((resolve) => {
+        maskCanvas.toBlob(resolve, "image/jpeg");
+      });
+      const maskFile = new File([maskBlob], "mask.jpg");
+      const maskURI = maskCanvas.toDataURL("image/jpeg")
+      console.log("mask", maskFile);
+      console.log("mask uri", maskURI);
+      
+
+      const formData = new FormData();
+      formData.append("sync", "1");
+      formData.append("image_file", imageFile);
+      formData.append("mask_file", maskFile);
+
+      const serverUrl = 'http://localhost:5000/processImage'; 
+      const response = await fetch(serverUrl, {
+        method: 'POST',
+        body: formData,
+        
+      });
+
+      if (response.ok) {
+        setLoading(false);
+        const data = await response.json();
+        console.log(data);
+        const imageUrl = data.data.image;
+
+        if (imageUrl) {
+          const img = new Image();
+          img.crossOrigin = "Anonymous";
+          img.onload = () => {
+            setImageAndDraw(img);
+            setImageApi(img);
+            setCanDownload(true);
+          };
+          img.src = imageUrl;
+          toast.success("Remove Object Success.",{
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "colored",
+          })
+        } else {
+          console.error("No image URL found in the API response.");
+          toast.error("No image URL found in the API response.",{
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "colored",
+          })
+        }
+      } else {
+        toast.error("An error occurred while sending the image.",{
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
+        })
+        throw new Error("An error occurred while sending the image.");
+      }
+    } catch (error) {
+      setLoading(false);
+      toast.error("Sever Error!!",{
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+      })
+      console.error(error);
+    }
+  };
+  const handleWheel = (event) => {
+    event.preventDefault();
+    const { deltaY } = event;
+    if (!draggind) {
+      setZoom((zoom) =>
+          clamp(zoom + deltaY * SCROLL_SENSITIVITY * -1, MIN_ZOOM, MAX_ZOOM)
+      );
+    }
+  };
+
+  useEffect(() => {
+      const canvas = canvasRef.current;
+      canvas.addEventListener('wheel', handleWheel);
+      return () => {
+          canvas.removeEventListener('wheel', handleWheel);
+      }
+  }, [handleWheel]);
+
+
+  return (
+    <div className="head">
+      <div className="icon-image" onClick={() => fileInputRef.current.click()}>
+        <CiImageOn />
+      </div>
+      <input onChange={handleFile} multiple={false} ref={fileInputRef} type="file" hidden />
+
+      
+      <div  className={`canvas-container ${isLoading ? 'loading' : ''}`} ref={containerRef}>
+        {isLoading ? <Loading /> : null}
+        <canvas
+          id = "drawmouse"
+          ref={canvasRef}
+          onMouseDown={startDrawing}
+          onMouseMove={draw}
+          onMouseUp={stopDrawing}
+          onMouseLeave={stopDrawing}
+          style={{
+            transform: `scale(${zoom})`, 
+          }}
+              
+        />
+      </div>
+      
+
+      <div className="menuBar">
+        <div className="brushClass">
+          {/* <p className="brushText">Brush</p> */}
+          <input 
+            type="range" 
+            min="10" max="150" 
+            value={brushSize} 
+            className="range" 
+            onChange={handleBrushSizeChange} 
+          />
+        </div>
+        <div className="buttonEraser" onClick={sendPicWish}>
+          Erase
+        </div>
+        <div className="button icon" onClick={undo}>
+          <HiArrowUturnLeft />
+        </div>
+        <div className="button icon" onClick={redo}>
+          <HiArrowUturnRight />
+        </div>
+        <div
+          className={`button icon ${canDownload ? "" : "disabled"}`}
+          id="download_image_link"
+          onClick={canDownload ? saveImageToLocal : null}
+          download="canvas.png"
+        >
+          <AiOutlineDownload />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default DrawRectangle;

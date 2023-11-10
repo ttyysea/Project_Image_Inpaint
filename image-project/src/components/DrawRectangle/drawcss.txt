@@ -1,0 +1,193 @@
+:root {
+  --window-width: calc(100vw - 20px);
+  --window-height: calc(100vh - 240px);
+}
+
+
+.canvas-container {
+    max-width: 100%;
+    height: auto;
+    background-color: black;
+    justify-content: center;
+    display: flex;
+
+    left: 0;
+    right: 0;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.head{
+    justify-self: center;
+    padding: 50px;
+}
+.images{
+    width: fit-content;
+    height: fit-content;
+}
+.image-upload{
+    text-decoration: none;
+    color: rgb(249, 145, 18);
+    padding: 0.7rem 1rem;
+    white-space: nowrap;
+    border-radius:  10px;
+    font-size: 1.2rem; 
+    font-weight: bold;
+}
+
+.input-img{
+    display: none;
+}
+
+.icon-image{
+    font-size: 3rem;
+    justify-content: flex-start;
+    color: aliceblue;
+    width: 60px;
+    height: fit-content;
+    justify-content: center;
+
+}
+.icon-image:hover,
+.icon-image.active {
+    background: rgb(249, 145, 18, 0.85);
+    color: rgb(27, 27, 27);
+    border-radius:  10px;
+    width: 60px;
+    height: fit-content;
+    justify-content: center;
+}
+
+.button{
+    text-decoration: none;
+    color: white;
+    padding: 0.7rem ;
+    white-space: nowrap;
+    font-size: 1.3rem;
+    border-radius:  5px;
+    border-radius:  10px;
+    justify-content: flex-start;
+    width: 80px;
+    height: fit-content;
+}
+.button:hover,
+.button.active {
+    background: rgb(249, 145, 18, 0.75);
+    transition: all 0.2s ease-in-out;
+    color: wheat;
+    border-radius:  10px;
+}
+
+.buttonEraser{
+    text-decoration: none;
+    color: rgb(255, 255, 255);
+    padding: 0.7rem 1rem;
+    background: rgb(249, 145, 18);
+    white-space: nowrap;
+    border-radius:  10px;
+    font-size: 1.2rem; 
+    font-weight: bold;
+}
+.buttonEraser:hover,
+.buttonEraser.active {
+    background: rgb(249, 145, 18, 0.75);
+    border-radius: 4px;
+    transition: all 0.2s ease-in-out;
+    color: white;
+    size: 20px;
+    border-radius:  10px;
+    
+}
+
+.menuBar{
+    background-color: hsla(0, 1%, 26%, 0.75);
+    border: 0;
+    border-radius: 1rem;
+    bottom:  2rem;
+    box-shadow: 0 0 0 1px rgba(218, 216, 216, 0.102), 0 3px 16px rgba(0,0,0,.078), 0 2px 6px 1px rgba(0,0,0,.09);
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    padding: .4rem 24px;
+    position: fixed;
+    width: fit-content;
+
+    left: 0;
+    right: 0;
+    margin-left: auto;
+    margin-right: auto;
+}
+.outer-div {
+    padding: 10px; /* เพิ่มพื้นที่ในกรอบ */
+    margin: 20px; /* สร้างขอบรอบ outer-div โดยใช้ margin */
+  
+    /* อื่น ๆ ที่คุณต้องการปรับแต่ง */
+  }
+  
+  .inner-div {
+    padding: 10px; /* เพิ่มพื้นที่ในกรอบ */
+  
+    /* อื่น ๆ ที่คุณต้องการปรับแต่ง */
+  }
+.brushClass {
+    display: flex;
+    align-items: center; 
+  }
+
+.brushText {
+    color :aliceblue;
+    font-size: 1.2rem;
+    padding-right: 0.7rem;
+    align-items: center;
+    font-weight: bold; 
+}
+  
+
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+    width: 10rem;
+  }
+  
+  input[type="range"]:focus {
+    outline: none;
+  }
+  
+
+  input[type="range"]::-webkit-slider-runnable-track {
+    background-color: #eee8e8;
+    border-radius: 0.5rem;
+    height: 0.5rem;
+  }
+  
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; /* Override default look */
+    appearance: none;
+    margin-top: -8px; /* Centers thumb on the track */
+    background-color: #ffc77a;
+    border-radius: 1rem;
+    height: 1.5rem;
+    width: 1.5rem;
+  }
+  
+  input[type="range"]::-moz-range-track {
+    background-color: #eee8e8;
+    border-radius: 0.5rem;
+    height: 0.5rem;
+  }
+  
+  input[type="range"]::-moz-range-thumb {
+    background-color: #ffc77a;
+    border: none; /*Removes extra border that FF applies*/
+    border-radius: 1rem;
+    height: 1.5rem;
+    width: 1.5rem;
+  }
+  
+  input[type="range"]:focus::-moz-range-thumb{
+    outline: 3px solid #ffc77a;
+    outline-offset: 0.125rem;
+  }
